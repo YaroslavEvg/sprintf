@@ -9,6 +9,8 @@
 #define DEBUG
 
 #ifdef DEBUG
+#define S21_NULL (void*)0
+typedef long unsigned s21_size_t;
 #define LOG_INFO(M, ...) \
   fprintf(stderr, "[INFO] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #define STR_LEN strlen
@@ -19,14 +21,19 @@
 
 //[flags][width][.precision][size]conversion
 typedef struct sprintf {
+  int error;
   struct {
     int minus;
     int plus;
     int space;
     int grid;
     int zero;
+    int flags;
   } flags;
-  int width;
+  struct {
+    int opt;
+    unsigned int size;
+  } width;
   int accuracy;
   struct {
     int h;
