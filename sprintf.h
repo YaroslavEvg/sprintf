@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define S21_NULL (void*)0
@@ -50,3 +50,5 @@ typedef struct sprintf {
   } modifiers;
   char conversion;
 } opt;
+
+enum Token { DOWN, UP, STAR };
