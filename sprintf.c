@@ -57,9 +57,11 @@ void up_width(opt *opt, const char *format, int *i) {
       }
     }
     if (!opt->error) {
+      ch[2] = '\0';
       // ch[STR_LEN(ch) + 1] = 0;
       if (s21_atoi(ch) < 65535) {
         opt->width.size = 0;
+        printf("ssss %s\n", ch);
         opt->width.size = s21_atoi(ch);
         opt->width.opt = 1;
       } else {
