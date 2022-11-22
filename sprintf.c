@@ -3,20 +3,23 @@
 void s21_sprintf(char *str, const char *format, ...);
 void init_struct(opt *opt);
 void up_flags(opt *opt, const char *format, int *i);
-void up_width(opt *opt, const char *format, int *i);
-void up_accur(opt *opt, const char *format, int *i);
-void str_to_int(int *error, int *opt, const char *format, int *i, int *digit);
+void up_width(opt *opt, const char *format, int *i, va_list arg);
+void up_accur(opt *opt, const char *format, int *i, va_list arg);
+void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
+                va_list arg);
 void up_modif(opt *opt, const char *format, int *i);
 void log_modif(opt *opt);
+void specifier(opt *opt, const char *format, int *i);
 
 int main(void) {
+  char test[] = "%-*.*d";
+  int a = 66, b = 44, c = 8;
   char string[1024] = {};
-  // sprintf(string, "%d", 1);
-  // LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
-  s21_sprintf(string, "%-65534.12l");
-  // fclose(stdin);
-  // fclose(stdout);
-  // fclose(stderr);
+  sprintf(string, test, a, b, c);
+  char string2[1024] = {};
+  s21_sprintf(string2, test, a, b, c);
+  LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
+  LOG_INFO("sprintf MYYY str %s, len %ld", string2, strlen(string2));
   return 0;
 }
 
@@ -35,9 +38,10 @@ void s21_sprintf(char *str, const char *format, ...) {
       for (int j = 0; j != 1;) {
         i++;
         up_flags(&opt, format, &i);
-        up_width(&opt, format, &i);
-        up_accur(&opt, format, &i);
+        up_width(&opt, format, &i, arg);
+        up_accur(&opt, format, &i, arg);
         up_modif(&opt, format, &i);
+        specifier(&opt, format, &i);
         j = 1;
       }
     }
@@ -45,20 +49,18 @@ void s21_sprintf(char *str, const char *format, ...) {
   va_end(arg);
 }
 
+void specifier(opt *opt, const char *format, int *i) {
+  (void)opt;
+  (void)format;
+  (void)i;
+}
+
 void up_modif(opt *opt, const char *format, int *i) {
   if (!opt->error) {
     if (format[(*i)] == 'h') {
-      if (format[(*i) + 1] == 'h') {
-        opt->modifiers.hh = UP;
-        (*i)++;
-      } else
-        opt->modifiers.h = UP;
+      opt->modifiers.h = UP;
     } else if (format[(*i)] == 'l') {
-      if (format[(*i) + 1] == 'l') {
-        opt->modifiers.ll = UP;
-        (*i)++;
-      } else
-        opt->modifiers.l = UP;
+      opt->modifiers.l = UP;
     } else if (format[(*i)] == 'L')
       opt->modifiers.L = UP;
     log_modif(opt);
@@ -69,33 +71,34 @@ void up_modif(opt *opt, const char *format, int *i) {
 void log_modif(opt *opt) {
   if (!opt->error) {
     LOG_INFO("Up_modif \"h\": %d", opt->modifiers.h);
-    LOG_INFO("Up_modif \"hh\": %d", opt->modifiers.hh);
     LOG_INFO("Up_modif \"l\": %d", opt->modifiers.l);
-    LOG_INFO("Up_modif \"ll\": %d", opt->modifiers.ll);
     LOG_INFO("Up_modif \"L\": %d", opt->modifiers.L);
   }
 }
 
-void up_accur(opt *opt, const char *format, int *i) {
+void up_accur(opt *opt, const char *format, int *i, va_list arg) {
   if (!opt->error) {
     if (format[*i] == '.') {
       (*i)++;
       str_to_int(&(opt->error), &(opt->accuracy.opt), format, i,
-                 &(opt->accuracy.size));
+                 &(opt->accuracy.size), arg);
     }
     LOG_INFO("Up_accu: %d, int %d", opt->accuracy.opt, opt->accuracy.size);
   }
 }
 
-void up_width(opt *opt, const char *format, int *i) {
+void up_width(opt *opt, const char *format, int *i, va_list arg) {
   if (opt->flags.flags) (*i)++;
-  str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size));
+  str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size),
+             arg);
   LOG_INFO("Up_width: %d, int %d", opt->width.opt, opt->width.size);
 }
 
-void str_to_int(int *error, int *opt, const char *format, int *i, int *digit) {
+void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
+                va_list arg) {
   if (format[*i] == '*') {
-    *opt = STAR;
+    *op = STAR;
+    *digit = va_arg(arg, int);
     (*i)++;
   } else {
     if ('0' <= format[*i] && format[*i] <= '9') {
@@ -104,9 +107,9 @@ void str_to_int(int *error, int *opt, const char *format, int *i, int *digit) {
         ch[k] = format[(*i)];
         ch[k + 1] = 0;
       }
-      if (atoi(ch) < 65535) {
+      if (atoi(ch) < 1024) {
         *digit = atoi(ch);
-        *opt = UP;
+        *op = UP;
       } else {
         *error = UP;
         fprintf(stderr, "Use a width less than 65535\n");
@@ -134,9 +137,7 @@ void init_struct(opt *opt) {
   opt->flags.space = DOWN;
   opt->flags.zero = DOWN;
   opt->modifiers.h = DOWN;
-  opt->modifiers.hh = DOWN;
   opt->modifiers.l = DOWN;
-  opt->modifiers.ll = DOWN;
   opt->modifiers.L = DOWN;
   opt->width.opt = DOWN;
   opt->width.size = DOWN;

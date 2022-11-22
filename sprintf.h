@@ -43,9 +43,7 @@ typedef struct sprintf {
   } accuracy;
   struct {
     int h;
-    int hh;
     int l;
-    int ll;
     int L;
   } modifiers;
   char conversion;
