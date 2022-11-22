@@ -5,15 +5,16 @@ void init_struct(opt *opt);
 void up_flags(opt *opt, const char *format, int *i);
 void up_width(opt *opt, const char *format, int *i);
 void up_accur(opt *opt, const char *format, int *i);
+void str_to_int(int *error, int *opt, const char *format, int *i, int *digit);
 
 int main(void) {
   char string[1024] = {};
-  sprintf(string, "%d", 1);
-  LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
+  // sprintf(string, "%d", 1);
+  // LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
   s21_sprintf(string, "%-65534.12");
-  fclose(stdin);
-  fclose(stdout);
-  fclose(stderr);
+  // fclose(stdin);
+  // fclose(stdout);
+  // fclose(stderr);
   return 0;
 }
 
@@ -32,11 +33,11 @@ void s21_sprintf(char *str, const char *format, ...) {
       for (int j = 0; j != 1;) {
         i++;
         up_flags(&opt, format, &i);
-        LOG_INFO("Up_flags: simbol %c, flag %d", format[i], opt.flags.minus);
+        LOG_INFO("Up_flags: %d", opt.flags.flags);
         up_width(&opt, format, &i);
-        LOG_INFO("Up_width: Width string int %d", opt.width.size);
+        LOG_INFO("Up_width: %d, int %d", opt.width.opt, opt.width.size);
         up_accur(&opt, format, &i);
-        LOG_INFO("Up_accu: Width string int %d", opt.accuracy.size);
+        LOG_INFO("Up_accu: %d, int %d", opt.accuracy.opt, opt.accuracy.size);
         j = 1;
       }
     }
@@ -46,42 +47,36 @@ void s21_sprintf(char *str, const char *format, ...) {
 
 void up_accur(opt *opt, const char *format, int *i) {
   if (!opt->error) {
-    LOG_INFO("Accuracy точка %c", format[*i]);
     if (format[*i] == '.') {
+      (*i)++;
+      str_to_int(&(opt->error), &(opt->accuracy.opt), format, i,
+                 &(opt->accuracy.size));
     }
   }
 }
 
 void up_width(opt *opt, const char *format, int *i) {
   if (opt->flags.flags) (*i)++;
-  if (format[*i] == '*')
-    opt->width.opt = STAR;  //  Здесь остановился
-  else {
+  str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size));
+}
+
+void str_to_int(int *error, int *opt, const char *format, int *i, int *digit) {
+  if (format[*i] == '*') {
+    *opt = STAR;
+    (*i)++;
+  } else {
     if ('0' <= format[*i] && format[*i] <= '9') {
-      char *ch = NULL;
-      int k = 0;
-      for (; '0' <= format[(*i)] && format[(*i)] <= '9'; (*i)++, k++) {
-        if (!opt->error || k < 5) {
-          char *tmp = (char *)realloc(ch, sizeof(char) * (k + 1));
-          if (tmp != NULL) {
-            ch = tmp;
-            ch[k] = format[(*i)];
-            ch[k + 1] = 0;
-          } else {
-            opt->error = UP;
-            fprintf(stderr, "Error realloc\n");
-          }
-        }
+      char ch[5] = {0};
+      for (int k = 0; '0' <= format[(*i)] && format[(*i)] <= '9'; (*i)++, k++) {
+        ch[k] = format[(*i)];
+        ch[k + 1] = 0;
       }
-      if (!opt->error) {
-        if (atoi(ch) < 65535) {
-          opt->width.size = atoi(ch);
-          opt->width.opt = UP;
-        } else {
-          opt->error = UP;
-          fprintf(stderr, "Use a width less than 65535\n");
-        }
-        free(ch);
+      if (atoi(ch) < 65535) {
+        *digit = atoi(ch);
+        *opt = UP;
+      } else {
+        *error = UP;
+        fprintf(stderr, "Use a width less than 65535\n");
       }
     }
   }

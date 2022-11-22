@@ -35,11 +35,11 @@ typedef struct sprintf {
   } flags;
   struct {
     int opt;
-    unsigned int size;
+    int size;
   } width;
   struct {
     int opt;
-    unsigned int size;
+    int size;
   } accuracy;
   struct {
     int h;
