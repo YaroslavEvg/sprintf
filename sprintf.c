@@ -6,12 +6,14 @@ void up_flags(opt *opt, const char *format, int *i);
 void up_width(opt *opt, const char *format, int *i);
 void up_accur(opt *opt, const char *format, int *i);
 void str_to_int(int *error, int *opt, const char *format, int *i, int *digit);
+void up_modif(opt *opt, const char *format, int *i);
+void log_modif(opt *opt);
 
 int main(void) {
   char string[1024] = {};
   // sprintf(string, "%d", 1);
   // LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
-  s21_sprintf(string, "%-65534.12");
+  s21_sprintf(string, "%-65534.12l");
   // fclose(stdin);
   // fclose(stdout);
   // fclose(stderr);
@@ -33,16 +35,45 @@ void s21_sprintf(char *str, const char *format, ...) {
       for (int j = 0; j != 1;) {
         i++;
         up_flags(&opt, format, &i);
-        LOG_INFO("Up_flags: %d", opt.flags.flags);
         up_width(&opt, format, &i);
-        LOG_INFO("Up_width: %d, int %d", opt.width.opt, opt.width.size);
         up_accur(&opt, format, &i);
-        LOG_INFO("Up_accu: %d, int %d", opt.accuracy.opt, opt.accuracy.size);
+        up_modif(&opt, format, &i);
         j = 1;
       }
     }
   }
   va_end(arg);
+}
+
+void up_modif(opt *opt, const char *format, int *i) {
+  if (!opt->error) {
+    if (format[(*i)] == 'h') {
+      if (format[(*i) + 1] == 'h') {
+        opt->modifiers.hh = UP;
+        (*i)++;
+      } else
+        opt->modifiers.h = UP;
+    } else if (format[(*i)] == 'l') {
+      if (format[(*i) + 1] == 'l') {
+        opt->modifiers.ll = UP;
+        (*i)++;
+      } else
+        opt->modifiers.l = UP;
+    } else if (format[(*i)] == 'L')
+      opt->modifiers.L = UP;
+    log_modif(opt);
+    (*i)++;
+  }
+}
+
+void log_modif(opt *opt) {
+  if (!opt->error) {
+    LOG_INFO("Up_modif \"h\": %d", opt->modifiers.h);
+    LOG_INFO("Up_modif \"hh\": %d", opt->modifiers.hh);
+    LOG_INFO("Up_modif \"l\": %d", opt->modifiers.l);
+    LOG_INFO("Up_modif \"ll\": %d", opt->modifiers.ll);
+    LOG_INFO("Up_modif \"L\": %d", opt->modifiers.L);
+  }
 }
 
 void up_accur(opt *opt, const char *format, int *i) {
@@ -52,12 +83,14 @@ void up_accur(opt *opt, const char *format, int *i) {
       str_to_int(&(opt->error), &(opt->accuracy.opt), format, i,
                  &(opt->accuracy.size));
     }
+    LOG_INFO("Up_accu: %d, int %d", opt->accuracy.opt, opt->accuracy.size);
   }
 }
 
 void up_width(opt *opt, const char *format, int *i) {
   if (opt->flags.flags) (*i)++;
   str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size));
+  LOG_INFO("Up_width: %d, int %d", opt->width.opt, opt->width.size);
 }
 
 void str_to_int(int *error, int *opt, const char *format, int *i, int *digit) {
@@ -88,6 +121,7 @@ void up_flags(opt *opt, const char *format, int *i) {
   if (format[*i] == ' ') opt->flags.flags = opt->flags.space = UP;
   if (format[*i] == '#') opt->flags.flags = opt->flags.grid = UP;
   if (format[*i] == '0') opt->flags.flags = opt->flags.zero = UP;
+  LOG_INFO("Up_flags: %d", opt->flags.flags);
 }
 
 void init_struct(opt *opt) {
