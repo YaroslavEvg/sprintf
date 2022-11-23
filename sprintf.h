@@ -33,11 +33,9 @@ typedef struct sprintf {
     int flags;
   } flags;
   struct {
-    int opt;
     int size;
   } width;
   struct {
-    int opt;
     int size;
   } accuracy;
   struct {
@@ -48,4 +46,4 @@ typedef struct sprintf {
   char conversion;
 } opt;
 
-enum Token { DOWN, UP, STAR };
+enum Token { DOWN, UP };
