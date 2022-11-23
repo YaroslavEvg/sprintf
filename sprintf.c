@@ -17,7 +17,7 @@ int main(void) {
   char string[1024] = {};
   sprintf(string, test, a, b, c);
   char string2[1024] = {};
-  s21_sprintf(string2, test, a, b, c);
+  s21_sprintf(string2, test, 66000, b, c);
   LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
   LOG_INFO("sprintf MYYY str %s, len %ld", string2, strlen(string2));
   return 0;
@@ -91,7 +91,8 @@ void up_width(opt *opt, const char *format, int *i, va_list arg) {
   if (opt->flags.flags) (*i)++;
   str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size),
              arg);
-  LOG_INFO("Up_width: %d, int %d", opt->width.opt, opt->width.size);
+  if (!opt->error)
+    LOG_INFO("Up_width: %d, int %d", opt->width.opt, opt->width.size);
 }
 
 void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
@@ -100,22 +101,27 @@ void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
     *op = STAR;
     *digit = va_arg(arg, int);
     (*i)++;
+    if (*digit > 1023) *error = UP;
   } else {
     if ('0' <= format[*i] && format[*i] <= '9') {
-      char ch[5] = {0};
+      char ch[4] = {0};
       for (int k = 0; '0' <= format[(*i)] && format[(*i)] <= '9'; (*i)++, k++) {
-        ch[k] = format[(*i)];
-        ch[k + 1] = 0;
+        if (k < 4) {
+          ch[k] = format[(*i)];
+          ch[k + 1] = 0;
+        } else if (k > 3 && *error != UP) {
+          *error = UP;
+        }
       }
       if (atoi(ch) < 1024) {
         *digit = atoi(ch);
         *op = UP;
       } else {
         *error = UP;
-        fprintf(stderr, "Use a width less than 65535\n");
       }
     }
   }
+  if (*error == UP) fprintf(stderr, "Use a width less than 1024\n");
 }
 
 void up_flags(opt *opt, const char *format, int *i) {
