@@ -12,12 +12,12 @@ void log_modif(opt *opt);
 void specifier(opt *opt, const char *format, int *i);
 
 int main(void) {
-  char test[] = "%-*.*d";
+  char test[] = "%-2.1ld %+*.*hc %09.8hi %le %hE";
   int a = 66, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
   char string2[1024] = {};
-  s21_sprintf(string2, test, 66000, b, c);
+  s21_sprintf(string2, test, a, b, c);
   LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
   LOG_INFO("sprintf MYYY str %s, len %ld", string2, strlen(string2));
   return 0;
@@ -51,8 +51,42 @@ void s21_sprintf(char *str, const char *format, ...) {
 
 void specifier(opt *opt, const char *format, int *i) {
   (void)opt;
-  (void)format;
   (void)i;
+  if (!opt->error) {
+    if (format[*i] == 'c') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'd') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'i') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'e') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'E') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'f') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'g') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'G') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'o') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 's') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'u') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'x') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'X') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'p') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == 'n') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    } else if (format[*i] == '%') {
+      LOG_INFO("Спецификатор %%%c", format[*i]);
+    }
+  }
 }
 
 void up_modif(opt *opt, const char *format, int *i) {
@@ -64,7 +98,6 @@ void up_modif(opt *opt, const char *format, int *i) {
     } else if (format[(*i)] == 'L')
       opt->modifiers.L = UP;
     log_modif(opt);
-    (*i)++;
   }
 }
 
@@ -91,8 +124,10 @@ void up_width(opt *opt, const char *format, int *i, va_list arg) {
   if (opt->flags.flags) (*i)++;
   str_to_int(&(opt->error), &(opt->width.opt), format, i, &(opt->width.size),
              arg);
+#ifdef DEBUG
   if (!opt->error)
     LOG_INFO("Up_width: %d, int %d", opt->width.opt, opt->width.size);
+#endif
 }
 
 void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
@@ -121,7 +156,8 @@ void str_to_int(int *error, int *op, const char *format, int *i, int *digit,
       }
     }
   }
-  if (*error == UP) fprintf(stderr, "Use a width less than 1024\n");
+  if (*error == UP)
+    fprintf(stderr, "Use a width and accuracy less than 1024\n");
 }
 
 void up_flags(opt *opt, const char *format, int *i) {
