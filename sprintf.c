@@ -18,7 +18,7 @@ int main(void) {
   int a = 44444, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
-  char string2[1024] = {};
+  char string2[1024] = {};  //
   s21_sprintf(string2, test, a, b, c);
   LOG_INFO("sprintf orig str %s, len %ld", string, strlen(string));
   LOG_INFO("sprintf MYYY str %s, len %ld", string2, strlen(string2));
