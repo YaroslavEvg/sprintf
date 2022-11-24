@@ -9,11 +9,13 @@ void str_to_int(int *error, const char *format, int *i, int *digit,
                 va_list arg);
 void up_modif(opt *opt, const char *format, int *i);
 void log_modif(opt *opt);
-void specifier(opt *opt, const char *format, int *i);
+void specifier(char *str, opt *opt, const char *format, int *i, int *simbol_n,
+               va_list arg);
+void spec_d(char *str, int *simbol_n, opt *opt, va_list arg);
 
 int main(void) {
-  char test[] = "%-2.1ld %+*.*hc %09.8hi %le %hE";
-  int a = 66, b = 44, c = 8;
+  char test[] = "%hd";
+  int a = 44444, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
   char string2[1024] = {};
@@ -24,7 +26,6 @@ int main(void) {
 }
 
 void s21_sprintf(char *str, const char *format, ...) {
-  (void)str;
   opt opt = {};
   init_struct(&opt);
   setlocale(LC_ALL, "");
@@ -33,6 +34,7 @@ void s21_sprintf(char *str, const char *format, ...) {
   va_start(arg, format);
   int agr_len = STR_LEN(format);
   LOG_INFO("Длинна строки %d, строка \"%s\"", agr_len, format);
+  int simbol_n = 0;
   for (int i = 0; i < agr_len; i++) {
     if (format[i] == '%') {
       for (int j = 0; j != 1;) {
@@ -41,7 +43,7 @@ void s21_sprintf(char *str, const char *format, ...) {
         up_width(&opt, format, &i, arg);
         up_accur(&opt, format, &i, arg);
         up_modif(&opt, format, &i);
-        specifier(&opt, format, &i);
+        specifier(str, &opt, format, &i, &simbol_n, arg);
         init_struct(&opt);
         j = 1;
       }
@@ -50,14 +52,26 @@ void s21_sprintf(char *str, const char *format, ...) {
   va_end(arg);
 }
 
-void specifier(opt *opt, const char *format, int *i) {
-  (void)opt;
-  (void)i;
+void spec_d(char *str, int *simbol_n, opt *opt, va_list arg) {
+  (void)str;
+  (void)simbol_n;
+  if (!opt->error) {
+    if (opt->modifiers.h) {
+      long long int arg_d = (short int)va_arg(arg, int);
+    } else if (opt->modifiers.l) {
+      long long int arg_d = (short int)va_arg(arg, int);
+    }
+  }
+}
+
+void specifier(char *str, opt *opt, const char *format, int *i, int *simbol_n,
+               va_list arg) {
   if (!opt->error) {
     if (format[*i] == 'c') {
       LOG_INFO("Спецификатор %%%c", format[*i]);
     } else if (format[*i] == 'd') {
       LOG_INFO("Спецификатор %%%c", format[*i]);
+      spec_d(str, simbol_n, opt, arg);
     } else if (format[*i] == 'i') {
       LOG_INFO("Спецификатор %%%c", format[*i]);
     } else if (format[*i] == 'e') {
