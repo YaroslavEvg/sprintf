@@ -1,25 +1,8 @@
 #include "sprintf.h"
 
-int num_digs(int n, int radix);
-void s21_sprintf(char *str, const char *format, ...);
-void init_struct(opt *opt);
-void up_flags(opt *opt, const char *format, int *i);
-void up_width(opt *opt, const char *format, int *i, va_list arg);
-void up_accur(opt *opt, const char *format, int *i, va_list arg);
-void str_to_int(int *error, const char *format, int *i, int *digit,
-                va_list arg);
-void up_modif(opt *opt, const char *format, int *i);
-void log_modif(opt *opt);
-void specifier(char *str, opt *opt, const char *format, int *i, int *simbol_n,
-               va_list arg);
-void spec_d(char *str, int *simbol_n, opt *opt, va_list arg);
-void write_d(long long int arg_d, opt *opt, char *str, int *simbol_n);
-void flags(opt *opt, char *str, long long int arg_d, int *simbol_n);
-void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n);
-
 int main(void) {
-  char test[] = "%-+4d";
-  long long int a = 66, b = 44, c = 8;
+  char test[] = "%-+ld";
+  long long int a = -123456789012345, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
   char string2[1024] = {};
@@ -59,13 +42,13 @@ void s21_sprintf(char *str, const char *format, ...) {
 void spec_d(char *str, int *simbol_n, opt *opt, va_list arg) {
   if (!opt->error) {
     if (opt->modifiers.h) {
-      long long int arg_d = (short int)va_arg(arg, int);
+      long long int arg_d = (long long int)(short int)va_arg(arg, int);
       write_d(arg_d, opt, str, simbol_n);
     } else if (opt->modifiers.l) {
-      long long int arg_d = (long int)va_arg(arg, long int);
+      long long int arg_d = (long long int)(long int)va_arg(arg, long int);
       write_d(arg_d, opt, str, simbol_n);
     } else {
-      long long int arg_d = (int)va_arg(arg, int);
+      long long int arg_d = (long long int)(int)va_arg(arg, int);
       write_d(arg_d, opt, str, simbol_n);
     }
     if (opt->accuracy.size != DOWN) opt->flags.zero = DOWN;
@@ -74,52 +57,77 @@ void spec_d(char *str, int *simbol_n, opt *opt, va_list arg) {
 
 void write_d(long long int arg_d, opt *opt, char *str, int *simbol_n) {
   if (!opt->error) {
-    LOG_INFO("write d %lld", arg_d);
+    LOG_INFO("write spec d int %lld", arg_d);
     if (opt->flags.flags) flags(opt, str, arg_d, simbol_n);
-    (void)simbol_n;
-    (void)str;
   }
 }
 
 void flags(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   if (!opt->error) {
-    if (opt->flags.plus)
-      flag_plus();
-    else if (opt->flags.minus)
-      flag_minus(opt, str, arg_d, simbol_n);
-    else if (opt->flags.space)
-      flag_space();
-    else if (opt->flags.grid)
-      flag_grid();
-    else if (opt->flags.zero)
-      flag_zero();
+    if (opt->flags.plus) flag_plus(opt, str, arg_d, simbol_n);
+    if (opt->flags.minus) flag_minus(opt, str, arg_d, simbol_n);
+    // else if (opt->flags.space)
+    //   flag_space();
+    // else if (opt->flags.grid)
+    //   flag_grid();
+    // else if (opt->flags.zero)
+    //   flag_zero();
   }
 }
-
-void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
+void flag_plus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   if (!opt->error) {
-    int int_size = num_digs(arg_d, 10);
-    char tmp[] = itoa(arg_d);
-    if (opt->flags.plus) int_size += 1;
-    if (opt->width.size > int_size) {
-      for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
-           (*simbol_n)++) {
-        str[*simbol_n] =
-      }
+    if (opt->flags.plus && arg_d > 0) {
+      str[*simbol_n] = '+';
+      (*simbol_n)++;
     }
   }
 }
-
-int num_digs(int n, int radix) {
+void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
+  if (!opt->error) {
+    int int_size = num_digs(arg_d, 10);
+    char *tmp = (char *)calloc(LEN_LONG_LONG_INT, sizeof(char));
+    s21_itoa(opt, tmp, arg_d);
+    if (opt->width.size > int_size) {
+      for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
+           (*simbol_n)++) {
+        str[*simbol_n] = ' ';
+        (*simbol_n)++;
+        // доделать, не правильно выводит
+      }
+      str[*simbol_n] = 0;
+      printf("%s|%s\n", tmp, str);
+      (*simbol_n)++;
+    }
+    // вывод
+    if (arg_d < 0) {
+      str[*simbol_n] = '-';
+      (*simbol_n)++;
+    }
+    strcat(str, tmp);
+    // вывод
+  }
+}
+int num_digs(long long int n, int radix) {
+  if (n < 0) n *= -1;
   int c = 0;
-  n = abs(n);
   do {
-    ++c;
+    c++;
     n /= radix;
   } while (n > 0);
   return c;
 }
-
+void s21_itoa(opt *opt, char *memory_str, long long int arg) {
+  if (!opt->error) {
+    int i = num_digs(arg, 10);
+    if (arg < 0) arg *= -1;
+    memory_str[i--] = '\0';
+    for (; i > -1; i--) {
+      memory_str[i] = (arg % 10) + 48;
+      arg = arg / 10;
+    }
+    LOG_INFO("s21_itoa %s", memory_str);
+  }
+}
 void specifier(char *str, opt *opt, const char *format, int *i, int *simbol_n,
                va_list arg) {
   if (!opt->error) {
