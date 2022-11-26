@@ -1,7 +1,7 @@
 #include "sprintf.h"
 
 int main(void) {
-  char test[] = "%-+ld";
+  char test[] = "%20ld";
   long long int a = -123456789012345, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
@@ -86,25 +86,30 @@ void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   if (!opt->error) {
     int int_size = num_digs(arg_d, 10);
     char *tmp = (char *)calloc(LEN_LONG_LONG_INT, sizeof(char));
-    s21_itoa(opt, tmp, arg_d);
-    if (opt->width.size > int_size) {
-      for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
-           (*simbol_n)++) {
-        str[*simbol_n] = ' ';
+    if (tmp != NULL) {
+      s21_itoa(opt, tmp, arg_d);
+      if (opt->width.size > int_size) {
+        for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
+             (*simbol_n)++) {
+          str[*simbol_n] = ' ';
+          (*simbol_n)++;
+          // доделать, не правильно выводит
+        }
+        str[*simbol_n] = 0;
+        printf("%s|%s\n", tmp, str);
         (*simbol_n)++;
-        // доделать, не правильно выводит
       }
-      str[*simbol_n] = 0;
-      printf("%s|%s\n", tmp, str);
-      (*simbol_n)++;
+      // вывод
+      if (arg_d < 0) {
+        str[*simbol_n] = '-';
+        (*simbol_n)++;
+      }
+      strcat(str, tmp);
+      // вывод
+    } else {
+      opt->error = UP;
     }
-    // вывод
-    if (arg_d < 0) {
-      str[*simbol_n] = '-';
-      (*simbol_n)++;
-    }
-    strcat(str, tmp);
-    // вывод
+    free(tmp);
   }
 }
 int num_digs(long long int n, int radix) {

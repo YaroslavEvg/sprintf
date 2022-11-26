@@ -1,6 +1,6 @@
 #!/bin/bash
 
 #cd ../../../
-docker rmi -f desperos/valgrind/grep
-docker build . -t desperos/valgrind/grep -f materials/build/Valgrind/Dockerfile
-docker run --rm desperos/valgrind/grep
+docker rmi -f desperos_sprintf
+docker build . -t desperos_sprintf -f ./Dockerfile_sprintf
+docker run --rm desperos_sprintf
