@@ -1,3 +1,4 @@
+#include <check.h>
 #include <limits.h>
 #include <locale.h>
 #include <math.h>
