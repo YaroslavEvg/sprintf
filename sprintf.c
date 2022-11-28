@@ -1,8 +1,8 @@
 #include "sprintf.h"
 
 int main(void) {
-  char test[] = "%20ld";
-  long long int a = -123456789012345, b = 44, c = 8;
+  char test[] = "%+-20ld";
+  long long int a = 123456789012345, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
   char string2[1024] = {};
@@ -58,14 +58,14 @@ void spec_d(char *str, int *simbol_n, opt *opt, va_list arg) {
 void write_d(long long int arg_d, opt *opt, char *str, int *simbol_n) {
   if (!opt->error) {
     LOG_INFO("write spec d int %lld", arg_d);
-    if (opt->flags.flags) flags(opt, str, arg_d, simbol_n);
+    flags(opt, str, arg_d, simbol_n);
   }
 }
-
 void flags(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   if (!opt->error) {
-    if (opt->flags.plus) flag_plus(opt, str, arg_d, simbol_n);
-    if (opt->flags.minus) flag_minus(opt, str, arg_d, simbol_n);
+    if (opt->width.size < 0) opt->flags.minus = UP;
+    func_width(opt, str, arg_d, simbol_n);
+    // if (opt->flags.minus) flag_minus(opt, str, arg_d, simbol_n);
     // else if (opt->flags.space)
     //   flag_space();
     // else if (opt->flags.grid)
@@ -74,44 +74,83 @@ void flags(opt *opt, char *str, long long int arg_d, int *simbol_n) {
     //   flag_zero();
   }
 }
-void flag_plus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
-  if (!opt->error) {
-    if (opt->flags.plus && arg_d > 0) {
-      str[*simbol_n] = '+';
-      (*simbol_n)++;
-    }
-  }
-}
-void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
+void func_width(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   if (!opt->error) {
     int int_size = num_digs(arg_d, 10);
     char *tmp = (char *)calloc(LEN_LONG_LONG_INT, sizeof(char));
     if (tmp != NULL) {
       s21_itoa(opt, tmp, arg_d);
       if (opt->width.size > int_size) {
-        for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
-             (*simbol_n)++) {
-          str[*simbol_n] = ' ';
-          (*simbol_n)++;
-          // доделать, не правильно выводит
+        if (opt->flags.minus) {
+          flag_minus(opt, arg_d, str, simbol_n);
+          str[(*simbol_n)] = 0;
+          strcat(str, tmp);
+          *simbol_n = STR_LEN(str);
+          flag_width_more(opt, str, simbol_n, int_size);
+          LOG_INFO("Один %s", str);
+        } else {
+          flag_width_more(opt, str, simbol_n, int_size);
+          flag_minus(opt, arg_d, str, simbol_n);
+          str[++(*simbol_n)] = 0;
+          strcat(str, tmp);
+          *simbol_n = STR_LEN(str);
+          LOG_INFO("Два%s", str);
         }
-        str[*simbol_n] = 0;
-        printf("%s|%s\n", tmp, str);
-        (*simbol_n)++;
+      } else {
+        if (opt->flags.minus) {
+          flag_minus(opt, arg_d, str, simbol_n);
+          str[(*simbol_n)] = 0;
+          strcat(str, tmp);
+          *simbol_n = STR_LEN(str);
+          LOG_INFO("Три %s", str);
+        } else {
+          flag_minus(opt, arg_d, str, simbol_n);
+          str[(*simbol_n)] = 0;
+          strcat(str, tmp);
+          *simbol_n = STR_LEN(str);
+          LOG_INFO("Четыре %s", str);
+        }
       }
-      // вывод
-      if (arg_d < 0) {
-        str[*simbol_n] = '-';
-        (*simbol_n)++;
-      }
-      strcat(str, tmp);
-      // вывод
-    } else {
-      opt->error = UP;
+      free(tmp);
     }
-    free(tmp);
   }
 }
+void flag_width_more(opt *opt, char *str, int *simbol_n, int int_size) {
+  for (int i = 0; i < opt->width.size - int_size - 1; i++) {
+    str[(*simbol_n)++] = ' ';
+  }
+}
+void flag_minus(opt *opt, long long int arg_d, char *str, int *simbol_n) {
+  if (arg_d < 0)
+    str[(*simbol_n)++] = '-';
+  else if (opt->flags.plus)
+    str[(*simbol_n)++] = '+';
+}
+// void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
+//   if (!opt->error) {
+//     int int_size = num_digs(arg_d, 10);
+//     char *tmp = (char *)calloc(LEN_LONG_LONG_INT, sizeof(char));
+//     if (tmp != NULL) {
+//       s21_itoa(opt, tmp, arg_d);
+//       if (opt->width.size > int_size) {
+//         for (int i = *simbol_n + opt->width.size - int_size; *simbol_n < i;
+//              (*simbol_n)++) {
+//           str[*simbol_n] = ' ';
+//           (*simbol_n)++;
+//           // доделать, не правильно выводит
+//   1
+//}
+//         str[*simbol_n] = 0;
+//         printf("%s|%s\n", tmp, str);
+//         (*simbol_n)++;
+//       }
+//       strcat(str, tmp);
+//     } else {
+//       opt->error = UP;
+//     }
+//     free(tmp);
+//   }
+// }
 int num_digs(long long int n, int radix) {
   if (n < 0) n *= -1;
   int c = 0;
@@ -219,7 +258,7 @@ void str_to_int(int *error, const char *format, int *i, int *digit,
   if (format[*i] == '*') {
     *digit = va_arg(arg, int);
     (*i)++;
-    if (*digit > 1023) *error = UP;
+    if (*digit > 1023) *error = UP;  //
   } else {
     if ('0' <= format[*i] && format[*i] <= '9') {
       char ch[4] = {0};

@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS =-Wall -Werror -Wextra -std=c11
+FLAGS =-Wall -Werror -Wextra -std=c11 -g
 LIB =
 DEBUG =-g -DDEBUG
 DEBUGS =-fsanitize=address

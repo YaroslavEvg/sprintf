@@ -64,6 +64,8 @@ void specifier(char *str, opt *opt, const char *format, int *i, int *simbol_n,
 void spec_d(char *str, int *simbol_n, opt *opt, va_list arg);
 void write_d(long long int arg_d, opt *opt, char *str, int *simbol_n);
 void flags(opt *opt, char *str, long long int arg_d, int *simbol_n);
-void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n);
-void flag_plus(opt *opt, char *str, long long int arg_d, int *simbol_n);
+// void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n);
 void s21_itoa(opt *opt, char *memory_str, long long int arg);
+void func_width(opt *opt, char *str, long long int arg_d, int *simbol_n);
+void flag_width_more(opt *opt, char *str, int *simbol_n, int int_size);
+void flag_minus(opt *opt, long long int arg_d, char *str, int *simbol_n);
