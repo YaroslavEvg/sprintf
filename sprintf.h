@@ -49,6 +49,7 @@ typedef struct sprintf {
 
 enum Token { DOWN, UP };
 
+void flags_info(opt *opt);
 int num_digs(long long int n, int radix);
 void s21_sprintf(char *str, const char *format, ...);
 void init_struct(opt *opt);

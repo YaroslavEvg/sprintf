@@ -1,7 +1,7 @@
 #include "sprintf.h"
 
 int main(void) {
-  char test[] = "%+-20ld";
+  char test[] = "%-+20ld";
   long long int a = 123456789012345, b = 44, c = 8;
   char string[1024] = {};
   sprintf(string, test, a, b, c);
@@ -91,6 +91,7 @@ void func_width(opt *opt, char *str, long long int arg_d, int *simbol_n) {
         } else {
           flag_width_more(opt, str, simbol_n, int_size);
           flag_minus(opt, arg_d, str, simbol_n);
+          LOG_INFO("Два%s", str);
           str[++(*simbol_n)] = 0;
           strcat(str, tmp);
           *simbol_n = STR_LEN(str);
@@ -116,15 +117,18 @@ void func_width(opt *opt, char *str, long long int arg_d, int *simbol_n) {
   }
 }
 void flag_width_more(opt *opt, char *str, int *simbol_n, int int_size) {
-  for (int i = 0; i < opt->width.size - int_size - 1; i++) {
-    str[(*simbol_n)++] = ' ';
+  for (int i = 0; i < opt->width.size - int_size; i++) {
+    str[(*simbol_n)++] = '=';
   }
 }
 void flag_minus(opt *opt, long long int arg_d, char *str, int *simbol_n) {
-  if (arg_d < 0)
-    str[(*simbol_n)++] = '-';
-  else if (opt->flags.plus)
-    str[(*simbol_n)++] = '+';
+  if (arg_d < 0 || opt->flags.plus) {
+    if (opt->flags.plus)
+      str[(*simbol_n)++] = '+';
+    else if (arg_d < 0)
+      str[(*simbol_n)++] = '-';
+    opt->width.size--;
+  }
 }
 // void flag_minus(opt *opt, char *str, long long int arg_d, int *simbol_n) {
 //   if (!opt->error) {
@@ -282,34 +286,40 @@ void str_to_int(int *error, const char *format, int *i, int *digit,
 }
 
 void up_flags(opt *opt, const char *format, int *i) {
-  if (format[*i] == '-') {
-    (*i)++;
-    opt->flags.flags = opt->flags.minus = UP;
-    LOG_INFO("Up_flags -: %d", opt->flags.minus);
+  int x = 1;
+  while (x) {
+    if (format[*i] == '-') {
+      (*i)++;
+      opt->flags.flags = opt->flags.minus = UP;
+      continue;
+    } else if (format[*i] == '+') {
+      (*i)++;
+      opt->flags.flags = opt->flags.plus = UP;
+      continue;
+    } else if (format[*i] == ' ') {
+      (*i)++;
+      opt->flags.flags = opt->flags.space = UP;
+      continue;
+    } else if (format[*i] == '#') {
+      (*i)++;
+      opt->flags.flags = opt->flags.grid = UP;
+      continue;
+    } else if (format[*i] == '0') {
+      (*i)++;
+      opt->flags.flags = opt->flags.zero = UP;
+    }
+    x = 0;
   }
-  if (format[*i] == '+') {
-    (*i)++;
-    opt->flags.flags = opt->flags.plus = UP;
-    LOG_INFO("Up_flags +: %d", opt->flags.plus);
-  }
-  if (format[*i] == ' ') {
-    (*i)++;
-    opt->flags.flags = opt->flags.space = UP;
-    LOG_INFO("Up_flags ' ': %d", opt->flags.space);
-  }
-  if (format[*i] == '#') {
-    (*i)++;
-    opt->flags.flags = opt->flags.grid = UP;
-    LOG_INFO("Up_flags #: %d", opt->flags.grid);
-  }
-  if (format[*i] == '0') {
-    (*i)++;
-    opt->flags.flags = opt->flags.zero = UP;
-    LOG_INFO("Up_flags 0: %d", opt->flags.zero);
-  }
-  LOG_INFO("Up_flags: %d", opt->flags.flags);
+  flags_info(opt);
 }
-
+void flags_info(opt *opt) {
+  LOG_INFO("Up_flags: %d", opt->flags.flags);
+  LOG_INFO("Up_flags -: %d", opt->flags.minus);
+  LOG_INFO("Up_flags +: %d", opt->flags.plus);
+  LOG_INFO("Up_flags ' ': %d", opt->flags.space);
+  LOG_INFO("Up_flags #: %d", opt->flags.grid);
+  LOG_INFO("Up_flags 0: %d", opt->flags.zero);
+}
 void init_struct(opt *opt) {
   opt->accuracy.size = DOWN;
   opt->conversion = DOWN;
