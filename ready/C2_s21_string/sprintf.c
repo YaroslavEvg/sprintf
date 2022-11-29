@@ -4,6 +4,9 @@
 
 #include "utils.h"
 
+// VERTER 21_sprintf Functional test output: False
+// VERTER 21_sprintf Memory test: FAIL
+//                 ERROR SUMMARY: 1 errors from 1 contexts
 int s21_sprintf(char *str, const char *format, ...) {
   flags fl = {0};
   char *str_begin = str;

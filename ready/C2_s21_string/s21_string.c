@@ -328,6 +328,9 @@ char *s21_strtok(char *str, const char *delim) {
   return str;
 }
 
+// VERTER s21_trim Functional test output: False
+// VERTER s21_trim Memory test: FAIL
+//               ERROR SUMMARY: 1 errors from 1 contexts
 void *s21_trim(const char *src, const char *trim_chars) {
   char *result = S21_NULL;
   s21_size_t left_pivot = 0, right_pivot = 0;
